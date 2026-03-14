@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Основное объявление -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>{{ post.title }}</h3>
+                <span class="badge bg-secondary fs-6">{{ post.category.get_name_display }}</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 text-muted">
+                    <small>
+                        Автор: <a href="{% url 'posts:list' %}?author={{ post.author.pk }}">{{ post.author.username }}</a> |
+                        Дата: {{ post.created_at|date:"d.m.Y H:i" }} |
+                        {% if post.updated_at != post.created_at %}
+                            (ред. {{ post.updated_at|date:"d.m.Y H:i" }})
+                        {% endif %}
+                    </small>
+                </div>
+
+                <div class="post-content">
+                    {{ post.content|safe }}
+                </div>
+
+                {% if user == post.author %}
+                    <hr>
+                    <div class="btn-group">
+                        <a href="{% url 'posts:edit' post.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </a>
+                        <a href="{% url 'posts:delete' post.pk %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash"></i> Удалить
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Отклики -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Отклики ({{ responses|length }})</h4>
+            </div>
+            <div class="card-body">
+                {% if responses %}
+                    {% for response in responses %}
+                        <div class="card mb-2 {% if response.is_accepted %}border-success{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        {{ response.author.username }}
+                                        {% if response.author == post.author %}
+                                            <span class="badge bg-primary">Автор</span>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">{{ response.created_at|date:"d.m.Y H:i" }}</small>
+                                </div>
+                                <p class="card-text">{{ response.text }}</p>
+                                {% if response.is_accepted %}
+                                    <span class="badge bg-success">✓ Принят</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Пока нет откликов</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель с формой отклика -->
+    <div class="col-md-4">
+        {% if user.is_authenticated %}
+            {% if user != post.author %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Оставить отклик</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ response_form|crispy }}
+                            <button type="submit" class="btn btn-primary w-100">
+                                Отправить отклик
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Это ваше объявление. Вы не можете оставлять отклики на него.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="card">
+                <div class="card-body text-center">
+                    <p>Чтобы оставить отклик,</p>
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary">Войдите</a>
+                    <p class="mt-2 mb-0">или</p>
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-outline-primary">Зарегистрируйтесь</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

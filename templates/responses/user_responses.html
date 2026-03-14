@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои отклики{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Управление откликами</h2>
+
+<!-- Фильтры -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Фильтры</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="post" class="form-label">Объявление</label>
+                        <select name="post" id="post" class="form-select">
+                            <option value="">Все объявления</option>
+                            {% for post in user_posts %}
+                                <option value="{{ post.id }}" {% if current_post == post.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ post.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Статус</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">Все</option>
+                            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Ожидают</option>
+                            <option value="accepted" {% if current_status == 'accepted' %}selected{% endif %}>Принятые</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Поиск по тексту</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="Введите текст...">
+                    </div>
+
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Применить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список откликов -->
+<div class="row">
+    <div class="col-md-12">
+        {% if responses %}
+            {% for response in responses %}
+                <div class="card mb-3 {% if response.is_accepted %}border-success{% endif %}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="card-title">
+                                    <a href="{% url 'posts:detail' response.post.id %}" class="text-decoration-none">
+                                        {{ response.post.title }}
+                                    </a>
+                                </h5>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    От: {{ response.author.username }} |
+                                    {{ response.created_at|date:"d.m.Y H:i" }}
+                                </h6>
+                                <p class="card-text">{{ response.text }}</p>
+
+                                {% if response.is_accepted %}
+                                    <span class="badge bg-success">✓ Принят</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">⏳ Ожидает</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 d-flex align-items-center justify-content-end">
+                                <div class="btn-group" role="group">
+                                    {% if not response.is_accepted %}
+                                        <a href="{% url 'responses:accept' response.id %}"
+                                           class="btn btn-success btn-sm"
+                                           onclick="return confirm('Принять этот отклик?')">
+                                            <i class="bi bi-check-lg"></i> Принять
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'responses:delete' response.id %}"
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('Удалить этот отклик?')">
+                                        <i class="bi bi-trash"></i> Удалить
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Пагинация -->
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if current_post %}&post={{ current_post }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                    &laquo; Первая
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_post %}&post={{ current_post }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                    Предыдущая
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_post %}&post={{ current_post }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                    Следующая
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_post %}&post={{ current_post }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                    Последняя &raquo;
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                {% if current_post or current_status or search_query %}
+                    Нет откликов, соответствующих выбранным фильтрам.
+                    <a href="{% url 'responses:user_responses' %}" class="alert-link">Сбросить фильтры</a>
+                {% else %}
+                    У вас пока нет откликов на ваши объявления.
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
