@@ -9,6 +9,7 @@ from django.conf import settings
 from .forms import SignUpForm, VerifyForm
 from .models import OneTimeCode, User
 
+
 def signup(request):
     """Регистрация нового пользователя с отправкой кода подтверждения"""
     if request.method == 'POST':
@@ -16,33 +17,39 @@ def signup(request):
         if form.is_valid():
             # Создаем пользователя, но не активируем
             user = form.save(commit=False)
-            user.is_active = False  # Блокируем вход до подтверждения
+            user.is_active = False
             user.save()
+
+            # Удаляем старые неиспользованные коды этого пользователя
+            OneTimeCode.objects.filter(user=user, is_used=False).delete()
 
             # Генерируем и сохраняем код подтверждения
             code = OneTimeCode.generate_code()
-            OneTimeCode.objects.create(user=user, code=code)
+            verification_code = OneTimeCode.objects.create(
+                user=user,
+                code=code,
+                is_used=False
+            )
 
-            # Отправляем код на email
-            subject = 'Подтверждение регистрации на MMORPG Fan Board'
-            message = f'Ваш код подтверждения: {code}\n\nВведите его на странице подтверждения.'
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [user.email]
+            # Сохраняем email в сессии для формы подтверждения
+            request.session['verification_email'] = user.email
 
-            try:
-                send_mail(subject, message, from_email, recipient_list)
-                messages.success(request, 'Код подтверждения отправлен на вашу почту')
-                # Сохраняем email в сессии для формы подтверждения
-                request.session['verification_email'] = user.email
-                return redirect('accounts:verify')
-            except Exception as e:
-                # Если письмо не отправилось, удаляем пользователя
-                user.delete()
-                messages.error(request, 'Ошибка при отправке письма. Попробуйте позже.')
+            # Отправляем код на email (сигнал сработает автоматически)
+            messages.success(
+                request,
+                'Код подтверждения отправлен на вашу почту. Проверьте email и введите код.'
+            )
+
+            return redirect('accounts:verify')
+
+        # Если форма невалидна, показываем ошибки
+        return render(request, 'accounts/signup.html', {'form': form})
+
     else:
         form = SignUpForm()
 
     return render(request, 'accounts/signup.html', {'form': form})
+
 
 def verify_email(request):
     """Подтверждение email по коду"""
@@ -59,6 +66,8 @@ def verify_email(request):
 
             try:
                 user = User.objects.get(email=email, is_active=False)
+
+                # Ищем действительный код
                 verification_code = OneTimeCode.objects.filter(
                     user=user,
                     code=code,
@@ -81,16 +90,33 @@ def verify_email(request):
                     # Очищаем сессию
                     del request.session['verification_email']
 
-                    messages.success(request, 'Email успешно подтвержден! Добро пожаловать!')
+                    messages.success(
+                        request,
+                        'Email успешно подтвержден! Добро пожаловать на MMORPG Fan Board!'
+                    )
                     return redirect('posts:list')
                 else:
-                    messages.error(request, 'Код истек или недействителен')
-            except (User.DoesNotExist, OneTimeCode.DoesNotExist):
-                messages.error(request, 'Неверный код подтверждения')
+                    messages.error(request, 'Код истек или недействителен. Запросите новый код.')
+
+                    # Опция: отправить новый код
+                    if 'resend' in request.POST:
+                        new_code = OneTimeCode.generate_code()
+                        OneTimeCode.objects.create(user=user, code=new_code)
+                        messages.info(request, 'Новый код отправлен на вашу почту.')
+
+            except User.DoesNotExist:
+                messages.error(request, 'Пользователь не найден или уже активирован.')
+            except OneTimeCode.DoesNotExist:
+                messages.error(request, 'Неверный код подтверждения.')
     else:
         form = VerifyForm()
 
     return render(request, 'accounts/verify.html', {'form': form, 'email': email})
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
 
 @login_required
 def profile(request):

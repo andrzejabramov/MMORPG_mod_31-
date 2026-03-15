@@ -22,6 +22,18 @@
                         <button type="submit" class="btn btn-primary">Подтвердить</button>
                     </div>
                 </form>
+
+                <hr>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="resend" value="1">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            Отправить код повторно
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

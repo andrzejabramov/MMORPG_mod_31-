@@ -7,6 +7,26 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     {% block extra_css %}{% endblock %}
+    <style>
+        #logout-form {
+            display: inline;
+            margin: 0;
+            padding: 0;
+        }
+        #logout-form button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 0.25rem 1rem;
+            font-weight: 400;
+            color: #212529;
+            text-decoration: none;
+        }
+        #logout-form button:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -47,6 +67,7 @@
 
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
+                        <!-- Кнопки для авторизованных пользователей -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'posts:create' %}">
                                 <i class="bi bi-plus-circle"></i> Создать
@@ -55,24 +76,27 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'responses:user_responses' %}">
                                 <i class="bi bi-chat-dots"></i> Отклики
-                                {% with unread_count=user.posts.all.0.responses.count %}
-                                    {% if unread_count > 0 %}
-                                        <span class="badge bg-danger">{{ unread_count }}</span>
-                                    {% endif %}
-                                {% endwith %}
                             </a>
                         </li>
+
+                        <!-- Выпадающее меню пользователя -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle"></i> {{ user.username }}
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Профиль</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Выйти</a></li>
+                                <li>
+                                    <form method="post" action="{% url 'accounts:logout' %}" id="logout-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Выйти</button>
+                                    </form>
+                                </li>
                             </ul>
                         </li>
                     {% else %}
+                        <!-- Кнопки для неавторизованных пользователей -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'accounts:login' %}">Войти</a>
                         </li>
