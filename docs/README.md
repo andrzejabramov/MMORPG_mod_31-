@@ -130,14 +130,14 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     is_verified = models.BooleanField(default=False)
 ```
-Модель OneTimeCode
+#### Модель OneTimeCode
 ```
 class OneTimeCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)
     is_used = models.BooleanField(default=False)
 ```
-Модель Category (фиксированные категории)
+#### Модель Category (фиксированные категории)
 ```
 CATEGORY_CHOICES = [
     ('TK', 'Танки'), ('HL', 'Хилы'), ('DD', 'ДД'),
@@ -146,7 +146,7 @@ CATEGORY_CHOICES = [
     ('SM', 'Мастера заклинаний'),
 ]
 ```
-Модель Post
+#### Модель Post
 ```
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -155,7 +155,7 @@ class Post(models.Model):
     content = models.TextField()  # WYSIWYG
     created_at = models.DateTimeField(auto_now_add=True)
 ```
-Модель Response
+#### Модель Response
 ```
 class Response(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
@@ -163,14 +163,14 @@ class Response(models.Model):
     text = models.TextField(max_length=1000)
     is_accepted = models.BooleanField(default=False)
 ```
-Миграции:
-
+#### Миграции:
+````
 python manage.py makemigrations accounts posts responses
 python manage.py migrate
-
-Этап 2: Представления и шаблоны
-Ключевые представления:
-
+````
+### Этап 2: Представления и шаблоны
+#### Ключевые представления:
+`````
 URL	View	Описание
 /	PostListView	Главная с пагинацией и фильтрацией
 /post/<pk>/	PostDetailView	Детали + форма отклика
@@ -180,45 +180,36 @@ URL	View	Описание
 /profile/responses/	UserResponsesView	Управление откликами
 /responses/<pk>/accept/	accept_response	Принять отклик
 /responses/<pk>/delete/	delete_response	Удалить отклик
-WYSIWYG-редактор:
+`````
+#### WYSIWYG-редактор:
 
-Пакет: django-summernote
+- Пакет: django-summernote
+- Подключен в PostForm
+- Позволяет вставлять изображения и видео
+- Фильтрация на главной:
+- По категориям (?category=...)
+- Поиск по заголовку и тексту (?search=...)
 
-Подключен в PostForm
+### Этап 3: Регистрация и аутентификация
+#### Механизм работы:
 
-Позволяет вставлять изображения и видео
+- Пользователь вводит email и пароль
+- Создается неактивный пользователь (is_active=False)
+- Генерируется 6-значный код (OneTimeCode)
+- Отправляется email с кодом (сигнал send_verification_code)
+- Пользователь вводит код на странице /accounts/verify/
+- При успехе: is_active=True, is_verified=True, автоматический вход
 
-Фильтрация на главной:
-
-По категориям (?category=...)
-
-Поиск по заголовку и тексту (?search=...)
-
-Этап 3: Регистрация и аутентификация
-Механизм работы:
-
-Пользователь вводит email и пароль
-
-Создается неактивный пользователь (is_active=False)
-
-Генерируется 6-значный код (OneTimeCode)
-
-Отправляется email с кодом (сигнал send_verification_code)
-
-Пользователь вводит код на странице /accounts/verify/
-
-При успехе: is_active=True, is_verified=True, автоматический вход
-
-Настройки email:
-
+#### Настройки email:
+````
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # dev
 # Для продакшена: SMTP (Yandex/Gmail)
+````
+### Этап 4: Отклики и уведомления (сигналы)
+#### Файл: responses/signals.py
 
-Этап 4: Отклики и уведомления (сигналы)
-Файл: responses/signals.py
-
-Сигнал 1: Уведомление автору о новом отклике
-
+#### Сигнал 1: Уведомление автору о новом отклике
+````
 @receiver(post_save, sender=Response)
 def notify_author_on_new_response(sender, instance, created, **kwargs):
     if created and instance.post.author != instance.author:
@@ -228,8 +219,9 @@ def notify_author_on_new_response(sender, instance, created, **kwargs):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[instance.post.author.email]
         )
-
-Сигнал 2: Уведомление автору отклика о принятии
+````
+#### Сигнал 2: Уведомление автору отклика о принятии
+````
 @receiver(post_save, sender=Response)
 def notify_author_on_response_accepted(sender, instance, created, **kwargs):
     if not created and instance.is_accepted:
@@ -237,10 +229,11 @@ def notify_author_on_response_accepted(sender, instance, created, **kwargs):
         old = Response.objects.get(pk=instance.pk)
         if not old.is_accepted:
             send_mail(...)  # уведомление автору отклика
+````
+#### Подключение сигналов: в apps.py каждого приложения.
 
-Подключение сигналов: в apps.py каждого приложения.
-
-Этап 5: Права доступа
+### Этап 5: Права доступа
+````
 Роль	Аноним	Авторизованный	Автор поста
 Просмотр объявлений	✅	✅	✅
 Создание объявления	❌	✅	✅
@@ -249,18 +242,17 @@ def notify_author_on_response_accepted(sender, instance, created, **kwargs):
 Создание отклика	❌	✅	❌ (на свои)
 Просмотр откликов	❌	❌	✅ (на свои)
 Принятие/удаление откликов	❌	❌	✅
-Реализация:
+````
+#### Реализация:
 
-LoginRequiredMixin — для views, требующих авторизации
+- LoginRequiredMixin — для views, требующих авторизации
+- UserPassesTestMixin + test_func() — для проверки авторства
+- В responses/views.py: явные проверки if response.post.author != request.user: raise PermissionDenied
 
-UserPassesTestMixin + test_func() — для проверки авторства
+### Этап 6: Новостные рассылки (кастомные команды)
 
-В responses/views.py: явные проверки if response.post.author != request.user: raise PermissionDenied
-
-Этап 6: Новостные рассылки (кастомные команды)
-
-Файл: accounts/management/commands/send_newsletter.py
-
+#### Файл: accounts/management/commands/send_newsletter.py
+``````
 # Тестовая отправка
 python manage.py send_test_email --to-admin
 
@@ -272,34 +264,32 @@ python manage.py send_newsletter \
 
 # Режим проверки (dry run)
 python manage.py send_newsletter --subject "Тест" --message "Тест" --dry-run
+``````
+#### Параметры команды:
 
-Параметры команды:
-
---subject — тема письма
-
---message — текст письма (или --file для загрузки из файла)
-
---recipients — all, active, verified, test
-
+--subject — тема письма  
+--message — текст письма (или --file для загрузки из файла)  
+--recipients — all, active, verified, test 
 --batch-size — размер партии (по умолчанию 50)
+--dry-run — только показать получателей  
 
---dry-run — только показать получателей
-
-Этап 7: Тестирование
-Автоматические тесты:
-
+### Этап 7: Тестирование
+#### Автоматические тесты:
+````
 python manage.py test
-
+````
 Результат:
-
+``````
 Found 4 test(s).
 ...
+
 ----------------------------------------------------------------------
 Ran 4 tests in 0.707s
 OK
-
-4. Результаты ручного тестирования
-4.1 Регистрация и вход
+``````
+### 4. Результаты ручного тестирования
+#### 4.1 Регистрация и вход
+````
 №	Сценарий	Действия	Ожидаемый результат	Статус	Скриншот
 1.1	Открыть страницу регистрации	/accounts/signup/	Форма с полями email, username, пароль	⬜	📸
 1.2	Регистрация с валидными данными	Заполнить форму → Submit	Письмо с кодом на email, редирект на /accounts/verify/	⬜	📸
@@ -313,7 +303,8 @@ OK
 1.10	Вход с правильными данными	Ввести email/пароль → Войти	Успешный вход, редирект на главную	⬜	📸
 1.11	Вход с неверным паролем	Ввести неправильный пароль	Ошибка «Неверный email или пароль»	⬜	📸
 1.12	Выход из системы	Нажать «Выйти»	Редирект на главную, кнопки «Войти»/«Регистрация»	⬜	📸
-4.2 Объявления (CRUD)
+````
+#### 4.2 Объявления (CRUD)
 №	Сценарий	Действия	Ожидаемый результат	Статус	Скриншот
 2.1	Создание объявления (авторизован)	/post/create/ → заполнить форму с WYSIWYG → Опубликовать	Объявление создано, редирект на детальную страницу	⬜	📸
 2.2	Создание без авторизации	Выйти → /post/create/	Редирект на /accounts/login/	⬜	📸
