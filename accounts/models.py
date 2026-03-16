@@ -38,7 +38,7 @@ class OneTimeCode(models.Model):
 
     def is_valid(self):
         """Check if code is not expired (24 hours)"""
-        expiry_time = self.created_at + timezone.timedelta(hours=24)
+        expiry_time = self.created_at + timezone.timedelta(hours=1)
         return timezone.now() <= expiry_time and not self.is_used
 
     def __str__(self):
