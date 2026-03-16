@@ -56,51 +56,51 @@
 
 ## 2. Архитектура и технологии
 ┌─────────────────────────────────────────────────────────────┐
-│ Клиент (Browser) │
-│ HTTP Request / Response │
+│ Клиент (Browser)                                            │
+│ HTTP Request / Response                                     │
 └─────────────────────────────────────────────────────────────┘
-↕
+                              ↕
 ┌─────────────────────────────────────────────────────────────┐
-│ URLs (urls.py) │
-│ Маршрутизация запросов │
+│ URLs (urls.py)                                              │
+│ Маршрутизация запросов                                      │
 └─────────────────────────────────────────────────────────────┘
-↕
+                              ↕
 ┌─────────────────────────────────────────────────────────────┐
-│ Views (views.py) │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
-│ │ ListView │ │ DetailView │ │ CreateView │ │
-│ │ (список) │ │ (детали) │ │ (создание) │ │
-│ └──────────────┘ └──────────────┘ └──────────────┘ │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
-│ │ UpdateView │ │ DeleteView │ │ FilterView │ │
-│ │ (редакт.) │ │ (удаление) │ │ (фильтры) │ │
-│ └──────────────┘ └──────────────┘ └──────────────┘ │
+│ Views (views.py)                                            │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+│ │ ListView     │ │ DetailView   │ │ CreateView   │          │
+│ │ (список)     │ │ (детали)     │ │ (создание)   │          │
+│ └──────────────┘ └──────────────┘ └──────────────┘          │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+│ │ UpdateView   │ │ DeleteView   │ │ FilterView   │          │
+│ │ (редакт.)    │ │ (удаление)   │ │ (фильтры)    │          │
+│ └──────────────┘ └──────────────┘ └──────────────┘          │
 └─────────────────────────────────────────────────────────────┘
-↕
+                              ↕
 ┌─────────────────────────────────────────────────────────────┐
-│ Models (models.py) │
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
-│ │ User │ │ OneTimeCode │ │ Category │ │
-│ │ (кастомный) │ │ (коды) │ │ (категории) │ │
-│ └─────────────┘ └─────────────┘ └─────────────┘ │
-│ ┌─────────────┐ ┌─────────────┐ │
-│ │ Post │ │ Response │ │
-│ │ (объявления)│ │ (отклики) │ │
-│ └─────────────┘ └─────────────┘ │
-│ Django ORM (SQLite) │
+│ Models (models.py)                                          │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │
+│ │ User        │ │ OneTimeCode │ │ Category    │             │
+│ │ (кастомный) │ │ (коды)      │ │ (категории) │             │
+│ └─────────────┘ └─────────────┘ └─────────────┘             │
+│ ┌─────────────┐ ┌─────────────┐                             │
+│ │ Post        │ │ Response    │                             │
+│ │ (объявления)│ │ (отклики)   │                             │
+│ └─────────────┘ └─────────────┘                             │
+│ Django ORM (SQLite)                                         │
 └─────────────────────────────────────────────────────────────┘
-↕
+                              ↕
 ┌─────────────────────────────────────────────────────────────┐
-│ Templates (.html) │
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
-│ │ base.html │ │ post_list │ │post_detail │ │
-│ │ (базовый) │ │ (список) │ │ (детали) │ │
-│ └─────────────┘ └─────────────┘ └─────────────┘ │
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
-│ │ post_form │ │ accounts/ │ │ responses/ │ │
-│ │ (создание) │ │ (профиль) │ │ (отклики) │ │
-│ └─────────────┘ └─────────────┘ └─────────────┘ │
-│ Django Template Language │
+│ Templates (.html)                                           │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │
+│ │ base.html   │ │ post_list   │ │post_detail  │             │
+│ │ (базовый)   │ │ (список)    │ │ (детали)    │             │
+│ └─────────────┘ └─────────────┘ └─────────────┘             │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │
+│ │ post_form   │ │ accounts/   │ │ responses/  │             │
+│ │ (создание)  │ │ (профиль)   │ │ (отклики)   │             │
+│ └─────────────┘ └─────────────┘ └─────────────┘             │
+│ Django Template Language                                    │
 └─────────────────────────────────────────────────────────────┘
 
 ### Технологический стек
@@ -128,40 +128,40 @@
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     is_verified = models.BooleanField(default=False)
-
+```
 Модель OneTimeCode
-
+```
 class OneTimeCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)
     is_used = models.BooleanField(default=False)
-
+```
 Модель Category (фиксированные категории)
-
+```
 CATEGORY_CHOICES = [
     ('TK', 'Танки'), ('HL', 'Хилы'), ('DD', 'ДД'),
     ('MR', 'Торговцы'), ('GM', 'Гилдмастеры'), ('QG', 'Квестгиверы'),
     ('BS', 'Кузнецы'), ('LW', 'Кожевники'), ('PM', 'Зельевары'),
     ('SM', 'Мастера заклинаний'),
 ]
-
+```
 Модель Post
-
+```
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     title = models.CharField(max_length=255)
     content = models.TextField()  # WYSIWYG
     created_at = models.DateTimeField(auto_now_add=True)
-
+```
 Модель Response
-
+```
 class Response(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField(max_length=1000)
     is_accepted = models.BooleanField(default=False)
-
+```
 Миграции:
 
 python manage.py makemigrations accounts posts responses
