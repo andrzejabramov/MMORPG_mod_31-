@@ -1,0 +1,33 @@
+/* static/css/custom.css */
+.errorlist {
+    color: #dc3545;
+    list-style: none;
+    padding: 0;
+    margin: 5px 0 0 0;
+    font-size: 0.875em;
+}
+
+.has-error input,
+.has-error select,
+.has-error textarea {
+    border-color: #dc3545;
+}
+
+.has-error .form-text {
+    color: #dc3545;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+/* Чтобы сообщения об ошибках были видны поверх всего */
+.alert {
+    position: relative;
+    z-index: 1000;
+}
