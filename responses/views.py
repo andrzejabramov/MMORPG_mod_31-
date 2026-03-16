@@ -1,5 +1,4 @@
-# responses/views.py (обновленная версия с полными проверками)
-
+# responses/views.py
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -19,9 +18,39 @@ class UserResponsesView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Берем все отклики на посты текущего пользователя
-        return Response.objects.filter(post__author=self.request.user).select_related('author', 'post')
+        queryset = Response.objects.filter(post__author=self.request.user)
 
-    # ... остальной код
+        # Фильтр по конкретному объявлению
+        post_id = self.request.GET.get('post')
+        if post_id:
+            queryset = queryset.filter(post_id=post_id)
+
+        # Фильтр по статусу
+        status = self.request.GET.get('status')
+        if status == 'accepted':
+            queryset = queryset.filter(is_accepted=True)
+        elif status == 'pending':
+            queryset = queryset.filter(is_accepted=False)
+
+        # Поиск по тексту отклика
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(text__icontains=search)
+
+        return queryset.select_related('author', 'post').order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Список постов пользователя для фильтрации
+        context['user_posts'] = Post.objects.filter(author=self.request.user)
+
+        # Текущие параметры фильтрации
+        context['current_post'] = self.request.GET.get('post', '')
+        context['current_status'] = self.request.GET.get('status', '')
+        context['search_query'] = self.request.GET.get('search', '')
+
+        return context
 
 
 @login_required

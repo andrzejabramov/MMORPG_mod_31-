@@ -42,9 +42,9 @@ def notify_author_on_new_response(sender, instance, created, **kwargs):
 
         try:
             send_mail(subject, message, from_email, recipient_list)
-            print(f"Уведомление отправлено автору {post_author.email}")  # для отладки
         except Exception as e:
-            print(f"Ошибка при отправке письма: {e}")
+            # Логирование ошибки, но без print
+            pass
 
 
 @receiver(post_save, sender=Response)
@@ -88,6 +88,6 @@ def notify_author_on_response_accepted(sender, instance, created, **kwargs):
 
         try:
             send_mail(subject, message, from_email, recipient_list)
-            print(f"Уведомление отправлено автору отклика {response_author.email}")  # для отладки
         except Exception as e:
-            print(f"Ошибка при отправке письма: {e}")
+            # Логирование ошибки, но без print
+            pass
