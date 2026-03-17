@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление объявления{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h3 class="text-center">Подтверждение удаления</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-center">Вы уверены, что хотите удалить объявление?</p>
+
+                <div class="alert alert-warning">
+                    <h5>{{ object.title }}</h5>
+                    <p>{{ object.content|striptags|truncatechars:200 }}</p>
+                    <p class="text-muted small">Автор: {{ object.author.username }} | Категория: {{ object.category.get_name_display }}</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'posts:detail' object.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
